@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MemoraX | Cache Memory Simulator</title>
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230f1a3a'/%3E%3Cg%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%235b8cff'/%3E%3Crect x='6' y='16' width='8' height='8' rx='2' fill='%235b8cff'/%3E%3Crect x='6' y='26' width='8' height='8' rx='2' fill='%235b8cff'/%3E%3Crect x='26' y='6' width='8' height='8' rx='2' fill='%23a98bff'/%3E%3Crect x='26' y='16' width='8' height='8' rx='2' fill='%23a98bff'/%3E%3Crect x='26' y='26' width='8' height='8' rx='2' fill='%23a98bff'/%3E%3Crect x='16' y='16' width='8' height='8' rx='2' fill='%23ffb340'/%3E%3C/g%3E%3C/svg%3E">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card: #131b33;
+      --ink: #e9eefc;
+      --mute: #8e9ac0;
+      --line: #222c4d;
+      --tag: #5b8cff;
+      --idx: #ffb340;
+      --off: #a98bff;
+      --hit: #35e0a1;
+      --miss: #ff6b7a;
+      --hitbg: #10382e;
+      --missbg: #40202b;
+      --sans: Sora, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.6 var(--sans);
+      overflow-x: hidden
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(900px 500px at 85% -10%, #2b3f9a55, transparent), radial-gradient(700px 400px at -10% 30%, #6a3fc233, transparent)
+    }
+
+    .box {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 18px
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      gap: 10px
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 21px;
+      text-decoration: none;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -.01em
+    }
+
+    .logo svg {
+      width: 36px;
+      height: 36px;
+      flex: none
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 11px 20px;
+      border-radius: 12px;
+      background: var(--tag);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 8px 24px #5b8cff44
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px #5b8cff66
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      box-shadow: none;
+      color: var(--ink)
+    }
+
+    .btn.ghost:hover {
+      border-color: var(--tag)
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--idx);
+      outline-offset: 3px
+    }
+
+    .mono {
+      font-family: var(--mono)
+    }
+
+    /* HOME */
+    #home {
+      font-size: 16px;
+      line-height: 1.65
+    }
+
+    #home h1 {
+      font-size: clamp(46px, 9vw, 92px);
+      line-height: 1;
+      margin: 0 0 18px;
+      letter-spacing: -.03em;
+      font-weight: 800
+    }
+
+    .hero {
+      padding: 48px 0 30px
+    }
+
+    .lead {
+      font-size: clamp(17px, 2.4vw, 21px);
+      color: var(--mute);
+      max-width: 56ch;
+      margin: 0 0 28px
+    }
+
+    .cta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .split {
+      margin-top: 40px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      overflow-x: auto
+    }
+
+    .split small {
+      color: var(--mute);
+      display: block;
+      margin-bottom: 12px
+    }
+
+    .abits {
+      display: flex;
+      gap: 6px;
+      font: 700 clamp(18px, 4vw, 30px) var(--mono);
+      min-width: max-content
+    }
+
+    .grp {
+      text-align: center
+    }
+
+    .grp div {
+      padding: 8px 10px;
+      border-radius: 10px;
+      letter-spacing: 3px
+    }
+
+    .grp span {
+      display: block;
+      font-size: 12px;
+      color: var(--mute);
+      margin-top: 6px;
+      font-family: var(--sans);
+      font-weight: 400
+    }
+
+    .g1 div {
+      background: #5b8cff22;
+      color: var(--tag)
+    }
+
+    .g2 div {
+      background: #ffb34022;
+      color: var(--idx)
+    }
+
+    .g3 div {
+      background: #a98bff22;
+      color: var(--off)
+    }
+
+    #home section {
+      padding: 44px 0
+    }
+
+    #home h2 {
+      font-size: clamp(26px, 4vw, 38px);
+      margin: 0 0 12px;
+      letter-spacing: -.02em;
+      line-height: 1.15
+    }
+
+    .sec-p {
+      color: var(--mute);
+      max-width: 64ch;
+      margin: 0 0 24px
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px
+    }
+
+    .lc {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px
+    }
+
+    .lc h3 {
+      margin: 0 0 6px;
+      font-size: 18px
+    }
+
+    .lc p {
+      margin: 0;
+      color: var(--mute);
+      font-size: 15px
+    }
+
+    .chit {
+      border-top: 3px solid var(--hit)
+    }
+
+    .cmiss {
+      border-top: 3px solid var(--miss)
+    }
+
+    .ft {
+      border-left: 4px solid var(--tag)
+    }
+
+    .fi {
+      border-left: 4px solid var(--idx)
+    }
+
+    .fo {
+      border-left: 4px solid var(--off)
+    }
+
+    .steps {
+      counter-reset: s;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px
+    }
+
+    .steps li {
+      counter-increment: s;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px
+    }
+
+    .steps li::before {
+      content: counter(s);
+      flex: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--tag);
+      display: grid;
+      place-items: center;
+      font-weight: 700
+    }
+
+    .team {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px
+    }
+
+    .dev {
+      text-align: center;
+      padding: 22px 14px
+    }
+
+    .av {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 22px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--tag), var(--off))
+    }
+
+    .final {
+      text-align: center;
+      background: linear-gradient(135deg, #2b3f9a, #5a34b8);
+      border-radius: 22px;
+      padding: 44px 20px;
+      margin: 20px 0 30px
+    }
+
+    #home .final h2 {
+      margin-bottom: 8px
+    }
+
+    .final p {
+      margin: 0 0 22px;
+      opacity: .9
+    }
+
+    .final .btn {
+      background: #fff;
+      color: #1b2760;
+      box-shadow: none
+    }
+
+    /* SIMULATOR */
+    #sim h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      margin: 6px 0 4px;
+      letter-spacing: -.02em;
+      line-height: 1.15
+    }
+
+    .sub {
+      color: var(--mute);
+      margin: 0 0 18px;
+      max-width: 64ch
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px
+    }
+
+    #sim h2 {
+      font-size: 16px;
+      margin: 0 0 12px
+    }
+
+    .ctrls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      color: var(--mute);
+      gap: 5px
+    }
+
+    select,
+    input,
+    button {
+      font: inherit;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .12s, border-color .15s
+    }
+
+    button:hover {
+      border-color: var(--tag);
+      transform: translateY(-1px)
+    }
+
+    button.go {
+      background: var(--tag);
+      border-color: var(--tag);
+      color: #fff;
+      min-width: 84px;
+      box-shadow: 0 6px 18px #5b8cff44
+    }
+
+    .bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-top: 14px
+    }
+
+    .bar label {
+      flex: 1;
+      min-width: 150px
+    }
+
+    .addr {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      min-height: 70px
+    }
+
+    .seg {
+      text-align: center
+    }
+
+    .seg b {
+      display: block;
+      font-size: 11px;
+      color: var(--mute);
+      font-weight: 400;
+      margin-top: 4px;
+      font-family: var(--sans)
+    }
+
+    .bits {
+      display: flex;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: clamp(15px, 3.6vw, 22px);
+      letter-spacing: 2px;
+      font-weight: 700
+    }
+
+    .t .bits {
+      background: #5b8cff22;
+      color: var(--tag)
+    }
+
+    .i .bits {
+      background: #ffb34022;
+      color: var(--idx)
+    }
+
+    .o .bits {
+      background: #a98bff22;
+      color: var(--off)
+    }
+
+    .msg {
+      margin-top: 12px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      background: var(--bg);
+      border-left: 4px solid var(--line)
+    }
+
+    .msg.hit {
+      background: var(--hitbg);
+      border-color: var(--hit)
+    }
+
+    .msg.miss {
+      background: var(--missbg);
+      border-color: var(--miss)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px
+    }
+
+    @media(min-width:820px) {
+      .grid {
+        grid-template-columns: 1.6fr 1fr
+      }
+    }
+
+    .wrap {
+      max-height: 430px;
+      overflow: auto
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px
+    }
+
+    .stat {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px
+    }
+
+    .stat small {
+      color: var(--mute)
+    }
+
+    .stat div {
+      font-size: 24px;
+      font-weight: 700
+    }
+
+    .meter {
+      height: 10px;
+      border-radius: 6px;
+      background: var(--missbg);
+      overflow: hidden
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      background: var(--hit);
+      width: 0;
+      transition: width .4s
+    }
+
+    .log {
+      max-height: 200px;
+      overflow: auto;
+      font-size: 12.5px;
+      margin-top: 12px
+    }
+
+    .log div {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .H {
+      color: var(--hit);
+      font-weight: 700
+    }
+
+    .M {
+      color: var(--miss);
+      font-weight: 700
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--mute);
+      margin-top: 10px
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-right: 5px;
+      background: currentColor
+    }
+
+    footer {
+      text-align: center;
+      color: var(--mute);
+      font-size: 13px;
+      padding: 22px 16px 34px;
+      border-top: 1px solid var(--line);
+      max-width: 1040px;
+      margin: 20px auto 0
+    }
+
+    /* SIMULATOR v2 */
+    #sim .card {
+      padding: 20px;
+      margin-bottom: 16px
+    }
+
+    #sim h2 {
+      font-size: 17px;
+      margin: 0 0 4px
+    }
+
+    .hint {
+      color: var(--mute);
+      font-size: 13.5px;
+      margin: 0 0 14px;
+      max-width: 72ch
+    }
+
+    .pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px
+    }
+
+    .pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font: 600 12.5px var(--mono);
+      border: 1px solid var(--line);
+      color: var(--mute)
+    }
+
+    .pill.t {
+      color: var(--tag);
+      background: #5b8cff1a
+    }
+
+    .pill.i {
+      color: var(--idx);
+      background: #ffb3401a
+    }
+
+    .pill.o {
+      color: var(--off);
+      background: #a98bff1a
+    }
+
+    .addrow {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end
+    }
+
+    .addrow label {
+      flex: 1
+    }
+
+    .err {
+      color: var(--miss);
+      font-size: 13px;
+      min-height: 20px;
+      margin: 8px 0 0
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 13px;
+      color: var(--mute);
+      margin: 4px 0 16px
+    }
+
+    button.sm {
+      padding: 6px 12px;
+      font-size: 13px
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+      border-color: var(--line)
+    }
+
+    .listhd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line)
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-height: 210px;
+      overflow: auto;
+      padding: 3px
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 3px 3px 3px 9px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--bg);
+      font-size: 13px
+    }
+
+    .chip i {
+      font: normal 11px var(--mono);
+      color: var(--mute)
+    }
+
+    .chip em {
+      font: 700 10.5px var(--sans);
+      font-style: normal;
+      padding: 1px 6px;
+      border-radius: 6px
+    }
+
+    .chip button {
+      padding: 0 7px;
+      line-height: 22px;
+      border: 0;
+      background: transparent;
+      color: var(--mute);
+      border-radius: 7px
+    }
+
+    .chip button:hover {
+      color: var(--miss);
+      transform: none
+    }
+
+    .chip.hit {
+      border-color: var(--hit);
+      background: var(--hitbg)
+    }
+
+    .chip.hit em {
+      color: var(--hit)
+    }
+
+    .chip.miss {
+      border-color: var(--miss);
+      background: var(--missbg)
+    }
+
+    .chip.miss em {
+      color: var(--miss)
+    }
+
+    .chip.cur {
+      outline: 2px solid var(--idx);
+      outline-offset: 1px
+    }
+
+    .empty {
+      color: var(--mute);
+      margin: 6px 0;
+      font-size: 14px
+    }
+
+    .runbar {
+      position: sticky;
+      top: 8px;
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      background: #131b33ee;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+      border-radius: 16px
+    }
+
+    .prog {
+      color: var(--mute);
+      font-size: 13px;
+      padding: 0 6px
+    }
+
+    .runbar .spd {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto
+    }
+
+    .runbar input[type=range] {
+      padding: 0;
+      border: 0;
+      width: 110px;
+      background: transparent
+    }
+
+    .grid {
+      grid-template-columns: 1fr
+    }
+
+    @media(min-width:900px) {
+      .grid {
+        grid-template-columns: 1.5fr 1fr
+      }
+    }
+
+    .tw {
+      overflow: auto;
+      max-height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 12px
+    }
+
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      white-space: nowrap
+    }
+
+    .tbl th,
+    .tbl td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .tbl td {
+      font-family: var(--mono)
+    }
+
+    .tbl thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #182142;
+      color: var(--mute);
+      font-weight: 600;
+      font-size: 12px
+    }
+
+    .tbl tr.f td,
+    .tbl tr.f th {
+      border-top: 2px solid #2d3a66
+    }
+
+    .tbl tr.on td {
+      background: #ffb3401c
+    }
+
+    .tbl tr.hit td {
+      background: var(--hitbg)
+    }
+
+    .tbl tr.miss td {
+      background: var(--missbg)
+    }
+
+    .tbl .sid {
+      color: var(--idx);
+      vertical-align: top;
+      font-family: var(--mono);
+      background: var(--card)
+    }
+
+    .tbl .tx {
+      font-family: var(--sans);
+      white-space: normal;
+      min-width: 230px
+    }
+
+    .tbl .tg {
+      color: var(--tag);
+      font-weight: 700
+    }
+
+    .em {
+      color: var(--mute);
+      font-style: italic;
+      font-family: var(--sans);
+      padding: 12px
+    }
+
+    .bd {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font: 700 11.5px var(--sans)
+    }
+
+    .bd.H {
+      background: var(--hitbg);
+      color: var(--hit)
+    }
+
+    .bd.M {
+      background: var(--missbg);
+      color: var(--miss)
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px
+    }
+
+    .tabs button[aria-pressed=true] {
+      background: var(--tag);
+      border-color: var(--tag);
+      color: #fff
+    }
+
+    .uniq {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px
+    }
+
+    .uniq b {
+      font-size: 13px;
+      display: block;
+      margin-bottom: 6px
+    }
+
+    .mini {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 8px;
+      font: 600 12.5px var(--mono);
+      margin: 0 6px 6px 0
+    }
+
+    .mini.H {
+      background: var(--hitbg);
+      color: var(--hit)
+    }
+
+    .mini.M {
+      background: var(--missbg);
+      color: var(--miss)
+    }
+
+    .stats {
+      grid-template-columns: 1fr 1fr
+    }
+
+    .stat div {
+      font-family: var(--mono)
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      * {
+        transition: none !important;
+        scroll-behavior: auto !important
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="lg" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="10" fill="#0f1a3a" />
+      <rect x=".75" y=".75" width="38.5" height="38.5" rx="9.5" fill="none" stroke="#2a3769" stroke-width="1.5" />
+      <g fill="#5b8cff">
+        <rect x="6" y="6" width="8" height="8" rx="2" />
+        <rect x="6" y="16" width="8" height="8" rx="2" />
+        <rect x="6" y="26" width="8" height="8" rx="2" />
+      </g>
+      <g fill="#a98bff">
+        <rect x="26" y="6" width="8" height="8" rx="2" />
+        <rect x="26" y="16" width="8" height="8" rx="2" />
+        <rect x="26" y="26" width="8" height="8" rx="2" />
+      </g>
+      <rect x="16" y="16" width="8" height="8" rx="2" fill="#ffb340" />
+    </symbol>
+  </svg>
+
+  <!-- PAGE 1: HOME -->
+  <div id="home">
+    <div class="box">
+      <nav><a class="logo" href="#/"><svg>
+            <use href="#lg" />
+          </svg>MemoraX</a><a class="btn" href="#/sim">Launch simulator</a></nav>
+      <header class="hero">
+        <h1>See how a cache thinks.</h1>
+        <p class="lead">MemoraX is an interactive cache memory simulator. Feed it memory addresses and watch each one
+          get split, looked up, and either found or fetched, one step at a time.</p>
+        <div class="cta"><a class="btn" href="#/sim">Launch simulator</a><a class="btn ghost" href="#learn">Learn the
+            basics</a></div>
+        <div class="split"><small>One 16-bit address, split the way the simulator splits it:</small>
+          <div class="abits" id="abits"></div>
+        </div>
+      </header>
+      <section id="learn">
+        <h2>What is cache memory?</h2>
+        <p class="sec-p">A cache is a small, very fast memory that sits between the processor and main memory. It keeps
+          copies of recently used data so the processor does not have to wait for the slower main memory every time.
+          MemoraX lets you see this happen instead of just reading about it.</p>
+        <div class="cols">
+          <div class="lc chit">
+            <h3>Hit</h3>
+            <p>The block you asked for is already in the cache. The data comes back immediately.</p>
+          </div>
+          <div class="lc cmiss">
+            <h3>Miss</h3>
+            <p>The block is not in the cache. It is fetched from main memory and stored, possibly replacing an older
+              block.</p>
+          </div>
+          <div class="lc">
+            <h3>Hit rate</h3>
+            <p>Hits divided by total accesses. The higher it is, the better the cache suits your access pattern.</p>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>How an address is split</h2>
+        <p class="sec-p">Every address is divided into three fields. MemoraX colors them the same way everywhere.</p>
+        <div class="cols">
+          <div class="lc ft">
+            <h3>Tag</h3>
+            <p>Identifies which block of memory is stored in a cache line. Compared on every lookup.</p>
+          </div>
+          <div class="lc fi">
+            <h3>Index</h3>
+            <p>Chooses which set in the cache to search.</p>
+          </div>
+          <div class="lc fo">
+            <h3>Offset</h3>
+            <p>Picks the exact byte inside the block.</p>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>What you can experiment with</h2>
+        <p class="sec-p">Change the setup and see how the hit rate responds.</p>
+        <div class="cols">
+          <div class="lc">
+            <h3>Mapping</h3>
+            <p>Direct-mapped, 2-way, 4-way or fully associative. More ways means fewer conflicts.</p>
+          </div>
+          <div class="lc">
+            <h3>Replacement</h3>
+            <p>LRU evicts the least recently used block. FIFO evicts the oldest one loaded.</p>
+          </div>
+          <div class="lc">
+            <h3>Sizes</h3>
+            <p>Cache sizes of 128, 256 or 512 bytes with block sizes of 8, 16 or 32 bytes.</p>
+          </div>
+          <div class="lc">
+            <h3>Access patterns</h3>
+            <p>Sequential, loop, conflict and random examples, or addresses you add yourself, with a full hit and miss
+              record for each.</p>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>Using the simulator</h2>
+        <ol class="steps" style="margin-top:18px">
+          <li>Choose a cache size, block size, mapping and replacement policy.</li>
+          <li>Add your own addresses (decimal, hex or binary), or load an example list.</li>
+          <li>Press Step to run one access, or Play to run them all.</li>
+          <li>Watch the address split, the set highlight, and the hit rate update, then check the history and address
+            report to see which addresses hit or missed.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Built by</h2>
+        <p class="sec-p">The team behind MemoraX.</p>
+        <div class="team">
+          <div class="lc dev">
+            <div class="av">AR</div><b>Aryan Rathore</b>
+          </div>
+          <div class="lc dev">
+            <div class="av">N</div><b>Niharikaa</b>
+          </div>
+          <div class="lc dev">
+            <div class="av">SS</div><b>Sneha Singh</b>
+          </div>
+          <div class="lc dev">
+            <div class="av">TS</div><b>Tanu Singh</b>
+          </div>
+        </div>
+      </section>
+      <div class="final">
+        <h2>Ready to run your first access?</h2>
+        <p>Open the simulator and press Step.</p><a class="btn" href="#/sim">Launch simulator</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: SIMULATOR -->
+  <div id="sim" hidden>
+    <main class="box">
+      <nav><a class="logo" href="#/"><svg>
+            <use href="#lg" />
+          </svg>MemoraX</a><a class="btn ghost" href="#/">Back to home</a></nav>
+      <h1>Cache simulator</h1>
+      <p class="sub">Choose a cache, add the memory addresses you want to access, then run them. Every access is
+        recorded as a hit or a miss, with the address, set and way involved.</p>
+
+      <section class="card">
+        <h2>Cache setup</h2>
+        <p class="hint">Changing any option clears the cache and restarts the run. Your address list is kept.</p>
+        <div class="ctrls">
+          <label>Cache size (bytes)<select id="size">
+              <option>128</option>
+              <option selected>256</option>
+              <option>512</option>
+            </select></label>
+          <label>Block size (bytes)<select id="block">
+              <option>8</option>
+              <option selected>16</option>
+              <option>32</option>
+            </select></label>
+          <label>Mapping<select id="ways">
+              <option value="1" selected>Direct-mapped</option>
+              <option value="2">2-way</option>
+              <option value="4">4-way</option>
+              <option value="0">Fully associative</option>
+            </select></label>
+          <label>Replacement<select id="pol">
+              <option>LRU</option>
+              <option>FIFO</option>
+            </select></label>
+        </div>
+        <div class="pills" id="geo"></div>
+      </section>
+
+      <section class="card">
+        <h2>Memory addresses</h2>
+        <p class="hint">Use decimal (64), hex (0x40) or binary (0b1000000), from 0 to 65535. Separate several addresses
+          with spaces or commas. Removing an address restarts the run.</p>
+        <div class="addrow"><label>Add address<input id="ain" class="mono" placeholder="e.g. 0x1A40, 256, 0b1010"
+              autocomplete="off"></label><button class="go" id="add">Add</button></div>
+        <p class="err" id="err" role="alert"></p>
+        <div class="presets"><span>Load an example list:</span>
+          <button class="sm" data-p="seq">Sequential walk</button><button class="sm" data-p="loop">Loop
+            (reuse)</button><button class="sm" data-p="conf">Conflict</button><button class="sm"
+            data-p="rnd">Random</button>
+        </div>
+        <div class="listhd"><b id="cnt">0 addresses</b><button class="sm" id="clr">Clear all</button></div>
+        <div class="chips" id="chips"></div>
+        <div class="legend"><span style="color:var(--idx)">Next to run</span><span
+            style="color:var(--hit)">Hit</span><span style="color:var(--miss)">Miss</span></div>
+      </section>
+
+      <div class="runbar">
+        <button class="go" id="play">Play</button><button id="step">Step</button><button id="all">Run
+          all</button><button id="reset">Restart run</button>
+        <span class="prog mono" id="p">0 / 0</span>
+        <label class="spd">Speed<input type="range" id="spd" min="1" max="10" value="5"></label>
+      </div>
+
+      <section class="card">
+        <h2>Current access</h2>
+        <div class="addr mono" id="addr"></div>
+        <div class="msg" id="msg" aria-live="polite"></div>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Cache lines</h2>
+          <p class="hint">Each row is one line. The highlighted set is the one being checked.</p>
+          <div class="tw" id="cache"></div>
+        </section>
+        <section class="card">
+          <h2>Results</h2>
+          <div class="stats">
+            <div class="stat"><small>Hits</small>
+              <div id="h" style="color:var(--hit)">0</div>
+            </div>
+            <div class="stat"><small>Misses</small>
+              <div id="m" style="color:var(--miss)">0</div>
+            </div>
+            <div class="stat"><small>Hit rate</small>
+              <div id="r">0%</div>
+            </div>
+            <div class="stat"><small>Accesses</small>
+              <div id="n">0</div>
+            </div>
+            <div class="stat"><small>First-use misses</small>
+              <div id="cd">0</div>
+            </div>
+            <div class="stat"><small>Re-fetch misses</small>
+              <div id="rf">0</div>
+            </div>
+          </div>
+          <div class="meter"><i id="mt"></i></div>
+          <p class="hint" style="margin-top:10px">First-use: the block was never loaded before. Re-fetch: it was loaded,
+            then evicted.</p>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>Access history</h2>
+        <p class="hint">Every access in order, newest first.</p>
+        <div class="tabs"><button data-f="all" aria-pressed="true">All</button><button data-f="hit"
+            aria-pressed="false">Hits</button><button data-f="miss" aria-pressed="false">Misses</button></div>
+        <div class="tw" id="hist"></div>
+      </section>
+
+      <section class="card">
+        <h2>Address report</h2>
+        <p class="hint">Which addresses were found in the cache, and which had to be fetched. A count after an address
+          is how many times.</p>
+        <div class="uniq">
+          <div><b>Addresses that hit</b>
+            <div id="uh"></div>
+          </div>
+          <div><b>Addresses that missed</b>
+            <div id="um"></div>
+          </div>
+        </div>
+        <div class="tw" id="rep"></div>
+      </section>
+    </main>
+  </div>
+
+  <footer>MemoraX &copy; 2026. Developed by Aryan Rathore, Niharikaa Singh, Sneha Singh and Tanu Singh.</footer>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    /* ---- routing: two pages in one file ---- */
+    function route() {
+      const s = location.hash === '#/sim';
+      $('home').hidden = s; $('sim').hidden = !s;
+      if (!s) stop();
+      document.title = s ? 'MemoraX | Simulator' : 'MemoraX | Cache Memory Simulator';
+      if (location.hash !== '#learn') scrollTo(0, 0);
+    }
+    addEventListener('hashchange', route);
+    /* ---- hero animation ---- */
+    (function () {
+      const el = $('abits');
+      const show = a => {
+        const b = a.toString(2).padStart(16, '0'), g = (c, s, l) => `<div class="grp ${c}"><div>${s}</div><span>${l}</span></div>`;
+        el.innerHTML = g('g1', b.slice(0, 8), 'tag') + g('g2', b.slice(8, 12), 'index') + g('g3', b.slice(12), 'offset')
+      };
+      show(0x2A5C);
+      if (!matchMedia('(prefers-reduced-motion:reduce)').matches) setInterval(() => show(Math.floor(Math.random() * 65536)), 2200);
+    })();
+    /* ---- simulator ---- */
+    let cfg, sets, hist, pos, clock, hits, miss, cold, seen, timer, pol, info, flt = 'all';
+    let addrs = [0, 4, 16, 256, 0, 16, 512, 0];
+    const hx = (n, p = 4) => '0x' + n.toString(16).toUpperCase().padStart(p, '0');
+    const bin = (n, w) => w ? n.toString(2).padStart(w, '0') : '';
+    const tg = t => hx(t, cfg.tp);
+    const rng = b => hx(b) + '\u2013' + hx(b + cfg.block - 1);
+    function parse(s) { if (/^0x[0-9a-f]+$/i.test(s)) return parseInt(s, 16); if (/^0b[01]+$/i.test(s)) return parseInt(s.slice(2), 2); if (/^\d+$/.test(s)) return parseInt(s, 10); return NaN }
+    function addText() {
+      const t = $('ain').value.split(/[\s,;]+/).filter(Boolean), ok = [], bad = [];
+      t.forEach(x => { const n = parse(x); (n >= 0 && n <= 65535) ? ok.push(n) : bad.push(x) });
+      addrs.push(...ok);
+      $('ain').value = bad.join(' ');
+      $('err').textContent = !t.length ? 'Type an address first.' : bad.length ? `Not added: ${bad.join(', ')}. Use a whole number from 0 to 65535 as decimal (64), hex (0x40) or binary (0b1000000).` : '';
+      refresh(); $('ain').focus();
+    }
+    function pattern(p) {
+      const o = [];
+      if (p === 'seq') for (let i = 0; i < 48; i++)o.push(i * 4);
+      else if (p === 'loop') for (let r = 0; r < 3; r++)for (let i = 0; i < 16; i++)o.push(i * 4);
+      else if (p === 'conf') for (let i = 0; i < 20; i++)o.push((i % 2) * cfg.size);
+      else { let s = 7; for (let i = 0; i < 40; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; o.push(((s >> 8) % 1024) & ~3) } }
+      addrs = o; $('err').textContent = ''; resetRun();
+    }
+    function build() {
+      stop(); pol = $('pol').value;
+      const size = +$('size').value, block = +$('block').value, nb = size / block;
+      let w = +$('ways').value; if (w === 0 || w > nb) w = nb;
+      cfg = { size, block, nb, w, ns: nb / w }; cfg.ob = Math.log2(block); cfg.ib = Math.log2(cfg.ns); cfg.tb = 16 - cfg.ob - cfg.ib; cfg.tp = Math.ceil(cfg.tb / 4);
+      $('geo').innerHTML = `<span class="pill">${nb} lines</span><span class="pill">${cfg.ns} set(s) x ${w} way(s)</span><span class="pill t">tag ${cfg.tb} bits</span><span class="pill i">index ${cfg.ib} bits</span><span class="pill o">offset ${cfg.ob} bits</span>`;
+      resetRun();
+    }
+    function resetRun() {
+      stop();
+      sets = Array.from({ length: cfg.ns }, () => Array.from({ length: cfg.w }, () => ({ v: 0, tag: 0, t: 0, h: 0 })));
+      pos = 0; clock = 0; hits = 0; miss = 0; cold = 0; seen = new Set(); hist = []; info = null; refresh();
+    }
+    function step() {
+      if (pos >= addrs.length) { stop(); return }
+      const a = addrs[pos++]; clock++;
+      const off = a & (cfg.block - 1), idx = (a >> cfg.ob) & (cfg.ns - 1), tag = a >> (cfg.ob + cfg.ib), ba = a >> cfg.ob, base = a - off, set = sets[idx];
+      let way = set.findIndex(l => l.v && l.tag === tag); const hit = way >= 0; let note, detail;
+      if (hit) {
+        hits++; set[way].h++; if (pol === 'LRU') set[way].t = clock;
+        note = `HIT. Address ${hx(a)} is byte ${off} of block ${rng(base)}. Set ${idx} already holds tag ${tg(tag)} in way ${way}, so main memory is not used.`; detail = `Found in way ${way}`
+      }
+      else {
+        miss++; const first = !seen.has(ba); if (first) cold++;
+        way = set.findIndex(l => !l.v); let ev = '', evd = '';
+        if (way < 0) {
+          way = 0; set.forEach((l, k) => { if (l.t < set[way].t) way = k }); const eb = ((set[way].tag << cfg.ib) | idx) << cfg.ob;
+          ev = ` Set was full, so ${pol} evicted block ${rng(eb)}.`; evd = `, evicted block ${hx(eb)}`
+        }
+        set[way] = { v: 1, tag, t: clock, h: 0 };
+        note = `MISS. Tag ${tg(tag)} is not in set ${idx} (${first ? 'first use of this block' : 'block was loaded before but got evicted'}). Block ${rng(base)} was fetched from main memory into way ${way}.${ev}`;
+        detail = `Loaded into way ${way} (${first ? 'first use' : 're-fetch'})${evd}`
+      }
+      seen.add(ba);
+      info = { a, idx, tag, off, hit, way, note };
+      hist.push({ n: pos, a, idx, tag, off, hit, detail });
+      refresh();
+      if (pos >= addrs.length) stop();
+    }
+    function stop() { clearInterval(timer); timer = null; $('play').textContent = 'Play' }
+    function play() {
+      if (timer) { stop(); return }
+      if (pos >= addrs.length) resetRun();
+      if (!addrs.length) return;
+      $('play').textContent = 'Pause'; timer = setInterval(step, 1500 - (+$('spd').value) * 140);
+    }
+    /* ---- rendering ---- */
+    function refresh() {
+      const n = hits + miss, e = !addrs.length, d = pos >= addrs.length;
+      $('cnt').textContent = addrs.length + (addrs.length === 1 ? ' address' : ' addresses');
+      $('chips').innerHTML = e ? '<p class="empty">No addresses yet. Type one above or load an example list to begin.</p>' :
+        addrs.map((a, i) => {
+          const h = hist[i], c = h ? (h.hit ? 'hit' : 'miss') : i === pos ? 'cur' : '';
+          return `<span class="chip ${c}"><i>${i + 1}</i><b class="mono">${hx(a)}</b>${h ? `<em>${h.hit ? 'HIT' : 'MISS'}</em>` : ''}<button data-rm="${i}" aria-label="Remove address ${hx(a)}">\u00d7</button></span>`
+        }).join('');
+      $('h').textContent = hits; $('m').textContent = miss; $('n').textContent = n; $('cd').textContent = cold; $('rf').textContent = miss - cold;
+      const r = n ? hits / n * 100 : 0; $('r').textContent = r.toFixed(1) + '%'; $('mt').style.width = r + '%';
+      $('p').textContent = `${pos} / ${addrs.length}`;
+      $('step').disabled = e || d; $('all').disabled = e || d; $('play').disabled = e; $('clr').disabled = e;
+      renderCur(); renderCache(); renderHist(); renderReport();
+    }
+    function renderCur() {
+      if (!info) {
+        $('addr').innerHTML = '<span class="empty">No access yet. Press Step or Play.</span>';
+        $('msg').className = 'msg'; $('msg').textContent = `${cfg.ns} set(s) with ${cfg.w} way(s) each. The index picks the set, and the tag identifies the block inside it.`; return
+      }
+      const { a, idx, tag, off, hit, note } = info, b = bin(a, 16);
+      $('addr').innerHTML = `<div class="seg" style="align-self:center"><div style="font-size:18px;font-weight:700">${hx(a)}</div><b>address (${a})</b></div><div style="align-self:center;color:var(--mute)">=</div>` +
+        `<div class="seg t"><div class="bits">${b.slice(0, cfg.tb) || '-'}</div><b>tag ${tg(tag)}</b></div>` +
+        `<div class="seg i"><div class="bits">${cfg.ib ? b.slice(cfg.tb, cfg.tb + cfg.ib) : '-'}</div><b>index = set ${idx}</b></div>` +
+        `<div class="seg o"><div class="bits">${b.slice(16 - cfg.ob)}</div><b>offset ${off}</b></div>`;
+      $('msg').className = 'msg ' + (hit ? 'hit' : 'miss'); $('msg').textContent = note;
+    }
+    function renderCache() {
+      let h = '<table class="tbl"><thead><tr><th>Set</th><th>Way</th><th>Tag</th><th>Block held (address range)</th><th>Hits</th></tr></thead><tbody>';
+      sets.forEach((s, i) => s.forEach((l, w) => {
+        const on = info && info.idx === i, t = on && info.way === w ? (info.hit ? ' hit' : ' miss') : '', base = ((l.tag << cfg.ib) | i) << cfg.ob;
+        h += `<tr class="${w === 0 ? 'f ' : ''}${on ? 'on' : ''}${t}">` + (w === 0 ? `<th class="sid" rowspan="${cfg.w}">S${i}</th>` : '') + `<td>${w}</td>` +
+          (l.v ? `<td class="tg">${tg(l.tag)}</td><td>${rng(base)}</td><td>${l.h}</td>` : '<td class="em" colspan="3">empty</td>') + '</tr>'
+      }));
+      const box = $('cache'), top = box.scrollTop; box.innerHTML = h + '</tbody></table>'; box.scrollTop = top;
+      if (info) { const r = box.querySelector('tr.hit,tr.miss'); if (r) { const b = box.getBoundingClientRect(), q = r.getBoundingClientRect(); if (q.top < b.top + 40 || q.bottom > b.bottom) box.scrollTop += q.top - b.top - b.height / 2 } }
+    }
+    function renderHist() {
+      const rows = hist.filter(x => flt === 'all' || (flt === 'hit') === x.hit).slice().reverse();
+      $('hist').innerHTML = rows.length ? '<table class="tbl"><thead><tr><th>#</th><th>Address</th><th>Tag</th><th>Set</th><th>Offset</th><th>Result</th><th>What happened</th></tr></thead><tbody>' +
+        rows.map(x => `<tr><td>${x.n}</td><td><b>${hx(x.a)}</b> (${x.a})</td><td class="tg">${tg(x.tag)}</td><td>S${x.idx}</td><td>${x.off}</td><td><span class="bd ${x.hit ? 'H' : 'M'}">${x.hit ? 'HIT' : 'MISS'}</span></td><td class="tx">${x.detail}</td></tr>`).join('') + '</tbody></table>' :
+        `<p class="em">${hist.length ? 'No ' + flt + 's recorded yet.' : 'Nothing recorded yet. Run an access to see it here.'}</p>`;
+    }
+    function renderReport() {
+      const m = new Map();
+      hist.forEach(x => { let r = m.get(x.a); if (!r) { r = { a: x.a, n: 0, h: 0, m: 0, idx: x.idx }; m.set(x.a, r) } r.n++; x.hit ? r.h++ : r.m++; r.last = x.hit });
+      const R = [...m.values()], chips = (k, c) => R.filter(r => r[k]).map(r => `<span class="mini ${c}">${hx(r.a)} x${r[k]}</span>`).join('') || '<span class="em" style="padding:0">none yet</span>';
+      $('uh').innerHTML = chips('h', 'H'); $('um').innerHTML = chips('m', 'M');
+      $('rep').innerHTML = R.length ? '<table class="tbl"><thead><tr><th>Address</th><th>Block</th><th>Set</th><th>Accesses</th><th>Hits</th><th>Misses</th><th>Last result</th></tr></thead><tbody>' +
+        R.map(r => `<tr><td><b>${hx(r.a)}</b> (${r.a})</td><td>${rng(r.a - (r.a & (cfg.block - 1)))}</td><td>S${r.idx}</td><td>${r.n}</td><td style="color:var(--hit)">${r.h}</td><td style="color:var(--miss)">${r.m}</td><td><span class="bd ${r.last ? 'H' : 'M'}">${r.last ? 'HIT' : 'MISS'}</span></td></tr>`).join('') + '</tbody></table>' :
+        '<p class="em">No addresses accessed yet.</p>';
+    }
+    /* ---- events ---- */
+    $('add').onclick = addText;
+    $('ain').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addText() } };
+    document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => pattern(b.dataset.p));
+    $('clr').onclick = () => { addrs = []; $('err').textContent = ''; resetRun() };
+    $('chips').onclick = e => { const b = e.target.closest('[data-rm]'); if (b) { addrs.splice(+b.dataset.rm, 1); resetRun() } };
+    document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { flt = b.dataset.f; document.querySelectorAll('[data-f]').forEach(x => x.setAttribute('aria-pressed', x === b)); renderHist() });
+    $('play').onclick = play; $('step').onclick = () => { stop(); step() }; $('all').onclick = () => { stop(); while (pos < addrs.length) step() }; $('reset').onclick = resetRun;
+    $('spd').oninput = () => { if (timer) { clearInterval(timer); timer = setInterval(step, 1500 - (+$('spd').value) * 140) } };
+    ['size', 'block', 'ways', 'pol'].forEach(i => $(i).onchange = build);
+    build(); route();
+  </script>
+</body>
+
+</html>
